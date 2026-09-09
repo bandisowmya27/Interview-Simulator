@@ -1,5 +1,12 @@
 fileFormatVersion: 2
 guid: 04c64e19d8f8f0140837c8a6b21c358d
+AssetOrigin:
+  serializedVersion: 1
+  productId: 199010
+  packageName: Dark Theme UI
+  packageVersion: 1.1
+  assetPath: Assets/Dark UI/Free/ButtonSmallRound.png
+  uploadId: 761092
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -49,7 +56,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteBorder: {x: 67, y: 63, z: 64, w: 66}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -114,7 +121,7 @@ TextureImporter:
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
-    internalID: 0
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []
@@ -128,10 +135,3 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 199010
-  packageName: Dark Theme UI
-  packageVersion: 1.1
-  assetPath: Assets/Dark UI/Free/ButtonSmallRound.png
-  uploadId: 761092

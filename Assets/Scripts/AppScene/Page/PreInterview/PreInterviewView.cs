@@ -1,16 +1,17 @@
-using UnityEngine;
+using Jing.UI;
+using UnityEngine.UI;
 
-public class PreInterviewView : MonoBehaviour
+namespace Jing.Game.PreInterview
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public class PreInterviewView : UIBaseView
     {
-        
-    }
+        private Button btn_save;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        protected override void InitGetUI()
+        {
+            base.InitGetUI();
+            btn_save = collector.GetUI<Button>("Button_Save");
+
+        }
     }
 }
