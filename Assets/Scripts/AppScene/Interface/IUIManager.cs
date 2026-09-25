@@ -1,16 +1,18 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using Jing.Data;
 using UnityEngine;
 
 namespace Jing.UI
 {
     public interface IUIManager
     {
-        void ShowPage(string pageName, bool hideCurrent = true);
-
+        UniTask ShowPage(string pageName);
+        UniTask ShowPageAndHideCurrent(string pageName);
+        UniTask ShowPageAndReleaseCurrent(string pageName);
         void ClosePage();
 
-        void OpenPopup(string popupName);
-
+        T OpenPopup<T>(string popupName) where T : UIBaseView;
         void ClosePopup();
 
         void CloseAll();

@@ -1,16 +1,33 @@
+using Jing.UI;
 using UnityEngine;
+using VContainer.Unity;
 
-public class LoadingView : MonoBehaviour
+namespace Jing.Game.Loading
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public class LoadingView : MonoBehaviour, IInitializable
     {
-        
-    }
+        #region ::: Inject :::
+        private ILoadingService vm;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        [VContainer.Inject]
+        public virtual void Construct(ILoadingService vm)
+        {
+            this.vm = vm;
+        }
+        #endregion
+
+        public void Initialize()
+        {
+            Debug.Log("AAA");
+            vm.Action_IsShow += IsShow;
+            IsShow(false);
+        }
+
+        private void IsShow(bool is_show)
+        {
+            gameObject.SetActive(is_show);
+        }
+
+
     }
 }
