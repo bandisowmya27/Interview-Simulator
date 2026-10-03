@@ -38,7 +38,7 @@ namespace Jing.StartMenu
         protected override void InitSet()
         {
             base.InitSet();
-            btn_start.interactable = (data_uesr.Resume != null);
+            btn_start.interactable = (!string.IsNullOrEmpty(data_uesr?.Resume?.OpenAI_FileId));
         }
 
         protected override void AddListence()

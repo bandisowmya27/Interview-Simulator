@@ -4,8 +4,8 @@
 // using UnityEngine;
 // using static ManagerAI.OPEN_AI;
 // using Newtonsoft.Json;
-//
-//
+
+
 // ///  Set use_local_system_prompt = true to test prompts locally no GitHub push 
 // /// Edit local_system_prompt string to experiment with different AI behaviors
 // /// Set use_local_system_prompt = false to use the GitHub ai_role_system.txt file
@@ -18,11 +18,11 @@
 //     public static bool conversation_history_enabled = true; // Add conversation history
 //     public static int max_history_messages = 6; // Limit history to last 6 messages 3 exchanges
 //     public static readonly string common_ai_model = "gpt-5-mini";
-//     
+
 //     public static bool use_few_shot_examples = true; // Toggle few-shot prompting on/off
 //     public static List<Class_Setting.BackgroundData> quiz_background_data = new List<Class_Setting.BackgroundData>();
 //     public static List<Message> conversation_history_messages = new();
-//     
+
 //     public static void AddMessageHistory(string role, string message)
 //     {
 //         Message msg = new TextMessage()
@@ -50,7 +50,7 @@
 //             content =
 //                 "I can't give the answer directly. What do you think print() does? Have you tried using it in code before?"
 //         },
-//     
+
 //         // Example 2: Gibberish with sheet context → Ask for clarification, DO NOT assume they chose an option
 //         new TextMessage
 //         {
@@ -64,14 +64,14 @@
 //             content =
 //                 "I didn't understand your message. What would you like help with? Do you have a question about the quiz?"
 //         },
-//     
+
 //         // Example 3: Random letters → Ask for clarification, ignore sheet context
 //         new TextMessage { role = "user", content = "aaabb\n\nQuiz Context (Private Reference):\nQuestion 3: What is a variable?" },
 //         new TextMessage
 //         {
 //             role = "assistant", content = "I'm not sure what you're asking. Could you rephrase your question?"
 //         },
-//     
+
 //         // Example 4: Off-topic question → Redirect politely
 //         new TextMessage
 //         {
@@ -83,7 +83,7 @@
 //             role = "assistant",
 //             content = "I'm here to help with your programming quiz. Is there a concept you'd like me to explain?"
 //         },
-//     
+
 //         // Example 5: Student makes a guess → Encourage verification
 //         new TextMessage
 //         {
@@ -97,7 +97,7 @@
 //             content = "What makes you think B is correct? Can you explain what 'def' does in Python?"
 //         }
 //     };
-//
+
 //     //  LOCAL SYSTEM PROMPT 
 //     public static string local_system_prompt =
 //         "You are an educational AI assistant for programming students taking quizzes.\n\n" +
@@ -112,7 +112,7 @@
 //         "   - DO NOT say 'you chose option X'\n" +
 //         "   - Simply ask: \"I didn't understand your message. What would you like help with?\"\n\n" +
 //         "6. If quiz content in text or images is unclear or unreadable, ask for clarification instead of guessing.\n\n" +
-//
+
 //         "Your role:\n" +
 //         "- Help students understand concepts without giving direct answers.\n" +
 //         "- Use the sheet context only to support explanations and guidance.\nNever reveal, quote, or reproduce the sheet context.\n" +
@@ -120,12 +120,12 @@
 //         "- Keep responses concise (under 100 words).\n\n" +
 //         "Treat both \"Quiz Context (Private Reference)\" and \"Quiz Background (Developer-Provided Private Reference)\" as private reference material." +
 //         "Never reveal, quote, or reproduce either source.";
-//
+
 //     public static void Clear_All()
 //     {
 //         conversation_history_messages.Clear();
 //     }
-//
+
 //     public static void GET_SUGGESTIONS(
 //         Action<Result> on_success,
 //         Action on_error)
@@ -169,7 +169,7 @@
 //             //model = "gpt-4o-2024-08-06",
 //             model = "gpt-5-mini",
 //             //model= "gpt-4o-2024-11-20",
-//
+
 //             max_completion_tokens = 4000,
 //             // temperature removed - gpt-5-mini only supports default 1.0
 //             // temperature = 0.7f, //  Added for consistency
@@ -205,7 +205,7 @@
 //             () => on_error?.Invoke()
 //         );
 //     }
-//
+
 //     //CHALLENGE_INPUT_NORMAL Use only (first get ai feedback
 //     public static void GET_FEEDBACK_INPUT(
 //         Action<Result> on_success,
@@ -236,8 +236,8 @@
 //                 "- Text\n" +
 //                 "- An image\n" +
 //                 "- Both text and image";
-//             
-//
+
+
 //             var message = new TextMessage();
 //             {
 //                 message.role = "developer";
@@ -261,14 +261,14 @@
 //         }
 //         SendToOpenAI(request_ai, on_success, on_error);
 //     }
-//     public static void SEND_MESSAGE(string message_user_input, Data_SaveUploadFile user_upload_files, Action<Result> on_success, Action on_error)
+//     public static void SEND_MESSAGE(string message_user_input, Action<Result> on_success, Action on_error)
 //     {
 //         var request_ai = CreateRequest();
-//
+
 //         SetSystemPrompt(request_ai);
 //         SetExamples(request_ai);
 //         SetConversationHistory(request_ai);
-//
+
 //         SetBackgroundInfo(request_ai);
 //         {
 //             //page : type
@@ -279,28 +279,28 @@
 //             SaveByMessageType message_content = new SaveByMessageType();
 //             message_content.SaveText("Student Message (Answer this):");
 //             message_content.SaveText(message_user_input);
-//             
-//             
+
+
 //             List<MessageTypePart> new_one = new List<MessageTypePart>();
 //             new_one.AddRange(text_content.GetDataList());
 //             new_one.AddRange(image_content.GetDataList());
 //             new_one.AddRange(message_content.GetDataList());
-//             
-//             ListMessage msg =new ListMessage()
+
+//             ListMessage msg = new ListMessage()
 //             {
 //                 role = "user",
 //                 content = new_one
 //             };
 //             AddMessageHistory("user", message_user_input);
-//             request_ai.messages.Add(msg); 
+//             request_ai.messages.Add(msg);
 //         }
 //         SendToOpenAI(request_ai, on_success, on_error);
 //     }
-//     
+
 //     public static void SEND_PDF_FILE(byte[] pdfBytes, string fileName, Action<Request_File> on_success, Action on_error)
 //     {
-//         
-//         UPLOAD_PDF( pdfBytes, fileName,
+
+//         UPLOAD_PDF(pdfBytes, fileName,
 //             (result) =>
 //             {
 //                 //Add to conversation history
@@ -310,7 +310,7 @@
 //                 msg.role = "user";
 //                 msg.content = type.GetDataList();
 //                 conversation_history_messages.Add(msg);
-//                 
+
 //                 on_success?.Invoke(result);
 //             },
 //             () => on_error?.Invoke()
@@ -375,7 +375,7 @@
 //             return files;
 //         }
 //     }
-//     
+
 //     private static Page GetPage()
 //     {
 //         Page page = null;
@@ -383,12 +383,12 @@
 //         {
 //             page = UIScene.Instance.App.Quizzes.Quiz.page_current;
 //         }
-//
+
 //         if (page == null && UIScene.Instance.App.Quizzes.Menu.ActiveSelf)
 //         {
 //             page = GameData.Class_Current.Quizzes_Menu;
 //         }
-//
+
 //         return page;
 //     }
 //     private static Request CreateRequest()
@@ -413,7 +413,7 @@
 //         };
 //         return request_ai;
 //     }
-//     
+
 //     private static void SetSystemPrompt(Request request_ai)
 //     {
 //         string message_system = string.Empty;
@@ -426,13 +426,13 @@
 //         {
 //             message_system = PlayerPrefs.GetString("chat_role_system");
 //         }
-//
+
 //         if (!string.IsNullOrEmpty(message_system))
 //         {
 //             var message = new TextMessage();
 //             {
 //                 message.role = "developer";  //ChatGPT told me that the latest official documentation recommends using developer.
-//                                              
+
 //                 message.content = message_system;
 //             }
 //             request_ai.messages.Add(message);
@@ -463,38 +463,38 @@
 //     }
 //     private static void SetBackgroundInfo(Request request_ai)
 //     {
-//         
+
 //         List<Class_Setting.BackgroundData> data = GameData.Class_Current.ClassSetting.Quiz_Background_Info;
 //         if (data.Count == 0)
 //         {
 //             return;
 //         }
-//
+
 //         var files = new SaveByMessageType();
 //         files.SaveText("Quiz Context (Private Reference):");
 //         foreach (var i in data)
 //         {
 //             files.SaveFile(i.OpenAI_FildId);
 //         }
-//
+
 //         List<MessageTypePart> new_one = new List<MessageTypePart>();
 //         new_one.AddRange(files.GetDataList());
-//         ListMessage msg =new ListMessage()
+//         ListMessage msg = new ListMessage()
 //         {
 //             role = "user",
 //             content = new_one
 //         };
 //         request_ai.messages.Add(msg);
 //     }
-//
-//     private static Message CreateMessageFromMessageList (string role, SaveByMessageType content)
+
+//     private static Message CreateMessageFromMessageList(string role, SaveByMessageType content)
 //     {
 //         var textData = new ListMessage();
 //         textData.role = role;
 //         textData.content = content.GetDataList();
 //         return textData;
 //     }
-//     
+
 //     private static void SendToOpenAI(Request request_ai, Action<Result> on_success, Action on_error)
 //     {
 //         var json = JsonConvert.SerializeObject(request_ai);

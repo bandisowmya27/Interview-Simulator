@@ -34,20 +34,12 @@ public class AppScene : MonoBehaviour, IInitializable
     {
         await Init();
 
-        PopupBaseData data = new PopupBaseData()
-        {
-            Content = "error"
-        };
-        var confirmPopup = uiManager.OpenPopup<PopupCommonContentOnly>("Popup_Common_ContentOnly");
-        confirmPopup.Show(data.Content, () => { uiManager.ClosePopup(); });
+        loading.Show();
+        uiManager.ShowPage("StartApp").Forget();
+        uiManager.ShowPage("LoginAndRegister").Forget();
+        // uiManager.ShowPage("MainMenu", false).Forget();
+        loading.Hide();
     }
-
-    // loading.Show();
-    // uiManager.ShowPage("StartApp").Forget();
-    // uiManager.ShowPage("LoginAndRegister").Forget();
-    // // uiManager.ShowPage("MainMenu", false).Forget();
-    // loading.Hide();
-    // }
 
     private async UniTask Init()
     {

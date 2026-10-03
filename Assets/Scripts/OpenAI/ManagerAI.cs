@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json;
+using Cysharp.Threading.Tasks;
 
 public class ManagerAI
 {
@@ -31,10 +32,10 @@ public class ManagerAI
             EventHandler<string> handler_cancellation_token = (sender, args) => { cancellation_token.Cancel(); };
             on_cancellation_token += handler_cancellation_token;
             is_requesting = true;
-            
+
             // Start timing
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-           
+
             byte[] post_data = Encoding.UTF8.GetBytes(json);
             using var request = new UnityWebRequest(
                 "https://open-ai-key-gray.vercel.app/api/chat", "POST");
@@ -92,7 +93,7 @@ public class ManagerAI
             }
         }
 
-        public static async void UPLOAD_PDF(byte[] pdfBytes, string fileName,
+        public static async UniTask UPLOAD_PDF(byte[] pdfBytes, string fileName,
             Action<Request_File> on_success, Action on_error)
         {
             var cancellation_token = new CancellationTokenSource();
@@ -209,7 +210,7 @@ public class ManagerAI
         {
             public List<MessageTypePart> content { get; set; }
         }
-        
+
         [Serializable]
         public class SaveByMessageType
         {
@@ -227,7 +228,7 @@ public class ManagerAI
             {
                 MessageTypePart_Image.Image img = new MessageTypePart_Image.Image();
                 img.url = url;
-                
+
                 MessageTypePart_Image data = new MessageTypePart_Image();
                 data.type = "image";
                 data.image_url = img;
@@ -238,7 +239,7 @@ public class ManagerAI
             {
                 MessageTypePart_File.File file = new MessageTypePart_File.File();
                 file.file_id = fileId;
-                
+
                 MessageTypePart_File data = new MessageTypePart_File();
                 data.type = "file";
                 data.file = file;
@@ -250,7 +251,7 @@ public class ManagerAI
                 return total_data;
             }
         }
-        
+
         [Serializable]
         public abstract class MessageTypePart
         {
@@ -267,7 +268,7 @@ public class ManagerAI
         public sealed class MessageTypePart_Image : MessageTypePart
         {
             public Image image_url;
-            
+
             [Serializable]
             public class Image
             {

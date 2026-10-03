@@ -24,7 +24,9 @@ namespace Jing.UI
             InitGetUI();
             InitSet();
             AddListence();
+            Run();
             gameObject.SetActive(true);
+
             loading.Hide();
         }
 
@@ -39,20 +41,13 @@ namespace Jing.UI
             collector = GetComponent<UICollector>();
         }
 
-        protected virtual void InitSet()
-        {
+        protected virtual void InitSet() { }
 
-        }
+        protected virtual void AddListence() { }
 
-        protected virtual void AddListence()
-        {
+        protected virtual void RemoveListence() { }
 
-        }
-
-        protected virtual void RemoveListence()
-        {
-
-        }
+        protected virtual void Run() { }
 
     }
 }

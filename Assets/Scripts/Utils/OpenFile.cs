@@ -22,20 +22,20 @@ public static class OpenFile
 
     private class WebGLPickerBridge : MonoBehaviour
     {
-        public TaskCompletionSource<(string file_name, byte[] data, string error)> Tcs;
+        public TaskCompletionSource<(byte[] data, string error)> Tcs;
 
         public void OnPdfSelected(string base64Result)
         {
             if (string.IsNullOrEmpty(base64Result))
             {
-                Tcs?.TrySetResult((null, null, "Operation canceled: No file was selected."));
+                Tcs?.TrySetResult((null, "Operation canceled: No file was selected."));
                 Destroy(gameObject);
                 return;
             }
             
             if (base64Result == "ERROR_SIZE")
             {
-                Tcs?.TrySetResult((null, null, $"The file size exceeds the {limit_size}MB limit!"));
+                Tcs?.TrySetResult((null, $"The file size exceeds the {limit_size}MB limit!"));
                 Destroy(gameObject);
                 return;
             }
@@ -53,13 +53,12 @@ public static class OpenFile
 
                 base64Result = base64Result.Trim().Replace("\r", "").Replace("\n", "");
                 byte[] bytes = Convert.FromBase64String(base64Result);
-                string name = Rename();
 
-                Tcs?.TrySetResult((name, bytes, string.Empty));
+                Tcs?.TrySetResult((bytes, string.Empty));
             }
             catch (Exception e)
             {
-                Tcs?.TrySetResult((null, null, $"Resume upload failed: {e.Message}"));
+                Tcs?.TrySetResult((null, $"Resume upload failed: {e.Message}"));
             }
             finally
             {
@@ -69,14 +68,14 @@ public static class OpenFile
     }
 #endif
 
-    public static async UniTask<(string file_name, byte[] data, string error)> Open()
+    public static async UniTask<(byte[] data, string error)> Open()
     {
 #if UNITY_EDITOR
         string path = EditorUtility.OpenFilePanel($"Please select a PDF file (Max {limit_size}MB).", "", "pdf");
 
         if (string.IsNullOrEmpty(path))
         {
-            return (null, null, "Operation canceled: No file was selected.");
+            return (null, "Operation canceled: No file was selected.");
         }
 
         try
@@ -86,15 +85,14 @@ public static class OpenFile
             long maxSizeBytes = limit_size * 1024 * 1024;
             if (bytes.Length > maxSizeBytes)
             {
-                return (null, null, $"The file size exceeds the {limit_size}MB limit!");
+                return (null, $"The file size exceeds the {limit_size}MB limit!");
             }
 
-            string name = Rename();
-            return (name, bytes, string.Empty);
+            return (bytes, string.Empty);
         }
         catch (Exception e)
         {
-            return (null, null, $"Resume upload failed: {e.Message}");
+            return (null, $"Resume upload failed: {e.Message}");
         }
 
 #elif UNITY_WEBGL
@@ -114,11 +112,5 @@ public static class OpenFile
         await Task.Yield();
         return (null, null, "Platform not supported.");
 #endif
-    }
-
-    private static string Rename()
-    {
-        string times = DateTime.UtcNow.ToString("yyyyMMdd_HHmm");
-        return $"pdf/{ManagerPlayFab.PlayFab_UserName}_{times}.pdf";
     }
 }

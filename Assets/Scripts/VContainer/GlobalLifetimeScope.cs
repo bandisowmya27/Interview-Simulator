@@ -21,12 +21,13 @@ namespace Jing.VContainerSetting
 
         private void Singleton(IContainerBuilder builder)
         {
-            builder.Register<UIManager>(Lifetime.Singleton).As<IUIManager>().AsSelf(); ;
+
             builder.Register<AddressableTools>(Lifetime.Singleton).As<IAddressableTools>();
             builder.Register<PageAssetProvider>(Lifetime.Singleton);
             builder.Register<LoadingService>(Lifetime.Singleton).As<ILoadingService>();
 
             builder.Register<Data_Uesr>(Lifetime.Singleton);
+
 
 
         }

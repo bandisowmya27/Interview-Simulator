@@ -18,7 +18,6 @@ namespace Jing.Game.Loading
 
         public void Initialize()
         {
-            Debug.Log("AAA");
             vm.Action_IsShow += IsShow;
             IsShow(false);
         }

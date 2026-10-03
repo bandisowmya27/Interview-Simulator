@@ -3,6 +3,7 @@ using Jing.Game.Loading;
 using Jing.UI;
 using PlayFab;
 using PlayFab.ClientModels;
+using PlayFab.MultiplayerModels;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,11 +25,13 @@ namespace Jing.LoginAndRegister
 
         #region ::: Inject :::
         private UIManager uiManager;
+        private LoginAndRegisterViewModel vm;
 
         [Inject]
-        public virtual void Construct(UIManager uiManager)
+        public virtual void Construct(UIManager uiManager, LoginAndRegisterViewModel vm)
         {
             this.uiManager = uiManager;
+            this.vm = vm;
         }
         #endregion
         protected override void InitGetUI()
@@ -47,14 +50,20 @@ namespace Jing.LoginAndRegister
             input_account.text = string.Empty;
             input_password.text = string.Empty;
             text_note.text = string.Empty;
+
         }
         protected override void AddListence()
         {
             RemoveListence();
             base.AddListence();
+
             btn_register.onClick.AddListener(Register);
             btn_login.onClick.AddListener(Login);
             btn_guest.onClick.AddListener(GuestUsed);
+
+            vm.Action_ErrorMsg += Action_ErrorMsg;
+
+
         }
 
         protected override void RemoveListence()
@@ -63,31 +72,34 @@ namespace Jing.LoginAndRegister
             btn_register.onClick.RemoveListener(Register);
             btn_login.onClick.RemoveListener(Login);
             btn_guest.onClick.RemoveListener(GuestUsed);
+
+            vm.Action_ErrorMsg += Action_ErrorMsg;
+
+        }
+
+        protected override void Run()
+        {
+
         }
 
         #region ::: Button OnClick :::
-        private void Register()
+        private async void Register()
         {
             loading.Show();
+
             if (input_account.text == string.Empty || input_password.text == string.Empty)
             {
                 text_note.text = "Error: Username and password are required.";
                 return;
             }
-            ManagerPlayFab.Try_SignUp(input_account.text, input_account.text, input_password.text, OnSuccess, OnFailed);
-            void OnSuccess()
+            bool success = await vm.Register(input_account.text, input_password.text);
+            if (success)
             {
-                loading.Hide();
                 Login();
             }
-
-            void OnFailed(PlayFabError result)
-            {
-                loading.Hide();
-                text_note.text = $"Error: {result.ErrorMessage}";
-            }
+            loading.Hide();
         }
-        private void Login()
+        private async void Login()
         {
             loading.Show();
             if (input_account.text == string.Empty || input_password.text == string.Empty)
@@ -95,23 +107,23 @@ namespace Jing.LoginAndRegister
                 text_note.text = $"Error: Username and password are required.";
                 return;
             }
-            ManagerPlayFab.Try_LogIn(input_account.text, input_password.text, OnSuccess, OnFailed);
-
-            void OnSuccess(LoginResult result)
+            bool success = await vm.Login(input_account.text, input_password.text);
+            if (success)
             {
-                loading.Hide();
                 JumpToMainMenu();
             }
-
-            void OnFailed(PlayFabError result)
-            {
-                loading.Hide();
-                text_note.text = $"Error: {result.ErrorMessage}";
-            }
+            loading.Hide();
         }
         private void GuestUsed()
         {
             JumpToMainMenu();
+        }
+        #endregion
+        #region ::: Action Function ::: 
+        //If msg is string.Empty, it means registration is successful.
+        private void Action_ErrorMsg(string msg)
+        {
+            text_note.text = msg;
         }
         #endregion
 
@@ -121,6 +133,7 @@ namespace Jing.LoginAndRegister
             loading.Show();
             uiManager.ShowPageAndReleaseCurrent("MainMenu").Forget();
             loading.Hide();
+            InitSet();
         }
         #endregion
 
