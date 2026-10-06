@@ -64,7 +64,23 @@ public class ManagerAI
                 }
                 else
                 {
+
                     Debug.Log($"[AI Response Time] {stopwatch.ElapsedMilliseconds} ms (FAILED)");
+                    string responseBody = request.downloadHandler?.text;
+
+                    if (string.IsNullOrEmpty(responseBody))
+                    {
+                        responseBody = "(伺服器沒有回傳內容)";
+                    }
+
+                    Debug.LogError(
+                        $"[AI Request Failed]\n" +
+                        $"HTTP Status: {request.responseCode}\n" +
+                        $"Unity Error: {request.error}\n" +
+                        $"Response Body:\n{responseBody}\n" +
+                        $"Elapsed: {stopwatch.ElapsedMilliseconds} ms"
+                    );
+
                     invoke_error();
                 }
             }
@@ -93,68 +109,49 @@ public class ManagerAI
             }
         }
 
-        public static async UniTask UPLOAD_PDF(byte[] pdfBytes, string fileName,
-            Action<Request_File> on_success, Action on_error)
+        public static async UniTask<Request_File> UPLOAD_PDF(byte[] pdfBytes, string fileName)
         {
             var cancellation_token = new CancellationTokenSource();
             EventHandler<string> handler_cancellation_token = (sender, args) => { cancellation_token.Cancel(); };
             on_cancellation_token += handler_cancellation_token;
+
             is_requesting = true;
 
             var formSections = new List<IMultipartFormSection>
             {
                 new MultipartFormDataSection("purpose", "user_data"),
-                new MultipartFormFileSection("file", pdfBytes, fileName, "application/pdf")
+                new MultipartFormFileSection("file", pdfBytes, $"{fileName}.pdf", "application/pdf")
             };
+
             using var request = UnityWebRequest.Post("https://open-ai-key-gray.vercel.app/api/files", formSections);
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var operation = request.SendWebRequest();
+
             try
             {
-                while (!operation.isDone)
-                {
-                    cancellation_token.Token.ThrowIfCancellationRequested();
-                    await Task.Yield();
-                }
+                await request.SendWebRequest().WithCancellation(cancellation_token.Token);
 
-                // Stop timing
                 stopwatch.Stop();
+                Debug.Log($"[AI Response Time] {stopwatch.ElapsedMilliseconds} ms ({stopwatch.Elapsed.TotalSeconds:F2} seconds)");
+                Debug.Log(request.downloadHandler.text);
 
-                if (request.result == UnityWebRequest.Result.Success)
-                {
-                    Debug.Log(
-                        $"[AI Response Time] {stopwatch.ElapsedMilliseconds} ms ({stopwatch.Elapsed.TotalSeconds:F2} seconds)");
-                    Debug.Log(request.downloadHandler.text);
-                    invoke_on_success(JsonConvert.DeserializeObject<Request_File>(request.downloadHandler.text));
-                }
-                else
-                {
-                    Debug.Log($"[AI Response Time] {stopwatch.ElapsedMilliseconds} ms (FAILED)");
-                    invoke_error();
-                }
+                return JsonConvert.DeserializeObject<Request_File>(request.downloadHandler.text);
             }
             catch (OperationCanceledException)
             {
                 stopwatch.Stop();
                 Debug.Log($"[AI Response Time] {stopwatch.ElapsedMilliseconds} ms (CANCELLED)");
-                request.Abort();
-                invoke_error();
+                return null;
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                Debug.Log($"[AI Response Time] {stopwatch.ElapsedMilliseconds} ms (FAILED): {ex.Message}");
+                return null;
             }
             finally
             {
+                is_requesting = false;
                 on_cancellation_token -= handler_cancellation_token;
-            }
-
-            void invoke_on_success(Request_File result)
-            {
-                is_requesting = false;
-                on_success?.Invoke(result);
-            }
-
-            void invoke_error()
-            {
-                is_requesting = false;
-                on_error?.Invoke();
             }
         }
 
@@ -166,7 +163,7 @@ public class ManagerAI
             public List<Message> messages = new();
             public float temperature = 1.0f;
             public int n = 1;
-            public string reasoning_effort = "low"; // "low", "medium", "high", or "" to disable for o-series models
+            public ResponseFormat response_format = null;
         }
 
         [Serializable]
@@ -197,6 +194,13 @@ public class ManagerAI
         public abstract class Message
         {
             public string role;
+        }
+
+        [Serializable]
+        public class ResponseFormat
+        {
+            public string type = "json_schema";
+            public Newtonsoft.Json.Linq.JObject json_schema;
         }
 
         [Serializable]

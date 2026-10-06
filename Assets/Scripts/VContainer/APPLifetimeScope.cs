@@ -11,6 +11,9 @@ public class APPLifetimeScope : LifetimeScope
         builder.RegisterComponentInHierarchy<AppScene>().As<IInitializable>();
         Singleton(builder);
 
+        builder.RegisterComponentInHierarchy<TestUse>();
+
+
     }
 
     private void Singleton(IContainerBuilder builder)
@@ -19,7 +22,7 @@ public class APPLifetimeScope : LifetimeScope
         builder.Register<AIResume>(Lifetime.Singleton).As<IAIResume>();
         builder.Register<LoginAndRegisterViewModel>(Lifetime.Singleton);
         builder.Register<SubUploadResumeViewModel>(Lifetime.Singleton);
-
+        builder.Register<SubUserInfoViewModel>(Lifetime.Singleton);
 
 
     }

@@ -2,6 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Jing.Data;
+using Jing.Game.PlayFab;
+using Jing.Game.Services;
 using PlayFab;
 using PlayFab.ClientModels;
 using UnityEngine;
@@ -16,21 +18,22 @@ namespace Jing.LoginAndRegister
         #endregion
 
         #region ::: Inject :::
-        private Data_Uesr data_uesr;
-
+        private IUserDataService userDataService;
+        private IPlayFabService playFabService;
         [Inject]
-        public virtual void Construct(Data_Uesr data_uesr)
+        public virtual void Construct(IUserDataService userDataService, IPlayFabService playFabService)
         {
-            this.data_uesr = data_uesr;
+            this.userDataService = userDataService;
+            this.playFabService = playFabService;
         }
         #endregion
 
         #region ::: Public Methods :::
-        public async UniTask<bool> Register(string account, string password)
+        public UniTask<bool> Register(string account, string password)
         {
             var tcs = new UniTaskCompletionSource<bool>();
             ManagerPlayFab.Try_SignUp(account, account, password, onSuccess, onFailed);
-            return await tcs.Task;
+            return tcs.Task;
 
             void onSuccess()
             {
@@ -43,16 +46,15 @@ namespace Jing.LoginAndRegister
             }
         }
 
-        public async UniTask<bool> Login(string account, string password)
+        public UniTask<bool> Login(string account, string password)
         {
             var tcs = new UniTaskCompletionSource<bool>();
             ManagerPlayFab.Try_LogIn(account, password, onSuccess, onFailed);
-            return await tcs.Task;
+            return tcs.Task;
 
-            void onSuccess(LoginResult result)
+            async void onSuccess(LoginResult result)
             {
-                Debug.Log("Login onSuccess");
-                AfterLogin_InitData(account, password);
+                await AfterLogin_InitData(account, password);
                 tcs.TrySetResult(true);
             }
             void onFailed(PlayFabError result)
@@ -64,19 +66,19 @@ namespace Jing.LoginAndRegister
         }
         #endregion
         #region ::: Private Methods :::
-        private void AfterLogin_InitData(string account, string password)
+        private async UniTask AfterLogin_InitData(string account, string password)
         {
-            data_uesr.Info = new Data_UserInformation()
+            userDataService.UpdateUserInfo(new Data_UserInformation()
             {
                 UserName = account,
                 Password = password
-            };
-            data_uesr.Resume = new Data_UserResume()
-            {
-                OpenAI_FileId = PlayerPrefs.GetString("OpenAI_FileId"),
-                OpenAI_FileName = PlayerPrefs.GetString("OpenAI_FileName")
-            };
+            });
 
+            Data_UploadResume info_upload = await playFabService.LoadUploadResume();
+            userDataService.UpdateResumeUploadInfo(info_upload);
+
+            Data_ResumeInfomation info_resume = await playFabService.LoadResumeInfo();
+            userDataService.UpdateResumeContentInfo(info_resume);
         }
         #endregion
 

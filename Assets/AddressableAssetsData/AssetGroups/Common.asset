@@ -21,6 +21,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Popup_UI
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0dafbf9e829645eda52a2f6882dcdc9
+    m_Address: Popup_Input
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Popup_UI
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: c9e01515ac1a04b4ea6012b65af1b2a4, type: 2}
   m_SchemaSet:

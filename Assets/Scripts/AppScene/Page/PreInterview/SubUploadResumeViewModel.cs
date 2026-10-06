@@ -2,6 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Jing.Data;
+using Jing.Game.PlayFab;
+using Jing.Game.Services;
 using UnityEditor.Rendering;
 using UnityEngine;
 using VContainer;
@@ -23,15 +25,18 @@ namespace Jing.Game.PreInterview
 
         #endregion
         #region ::: Inject :::
-        private Data_Uesr data_uesr;
+        private IUserDataService userDataService;
         private IAIResume aiResume;
+        private IPlayFabService playFabService;
 
 
         [Inject]
-        public void Construct(Data_Uesr data_uesr, IAIResume aiResume)
+        public void Construct(IUserDataService userDataService, IAIResume aiResume, IPlayFabService playFabService)
         {
-            this.data_uesr = data_uesr;
+            this.userDataService = userDataService;
             this.aiResume = aiResume;
+            this.playFabService = playFabService;
+
         }
 
         #endregion
@@ -39,8 +44,8 @@ namespace Jing.Game.PreInterview
         #region ::: Public Methods :::
         public void InitGet()
         {
-            FileId = PlayerPrefs.GetString("OpenAI_FileId");
-            FileName = PlayerPrefs.GetString("OpenAI_FileName");
+            FileId = userDataService.UserData?.ResumeUpload?.OpenAI_FileId ?? string.Empty;
+            FileName = userDataService.UserData?.ResumeUpload?.OpenAI_FileName ?? string.Empty;
 
         }
         public async UniTask UploadResume()
@@ -49,33 +54,24 @@ namespace Jing.Game.PreInterview
             if (!ConfirmOpenFile(error)) { return; }
 
             string times = DateTime.UtcNow.ToString("yyyyMMdd_HHmm");
-            string user_name = data_uesr?.Info?.UserName ?? "Guest";
+            string user_name = userDataService?.UserData?.UserInfo?.UserName ?? "Guest";
             string file_name = $"{user_name}_{times}";
 
             Request_File result = await aiResume.Send_PDF_File(bytes, file_name);
             if (!ConfirmUploadToOpenAI(result)) { return; }
-            string file_id = result.id;
-            data_uesr.Resume.OpenAI_FileId = file_id;
-            //test use
-
-            FileId = PlayerPrefs.GetString("OpenAI_FileId");
-            FileName = PlayerPrefs.GetString("OpenAI_FileName");
-
             Action_UpdateFileName?.Invoke(FileName);
-            AnalyResume();
         }
 
-        public async UniTask RemoveResume()
+        public async UniTask AnalyResume()
         {
-
+            Data_ResumeInfomation data = await aiResume.RequestOpenAIResumeAnalysis();
+            userDataService.UpdateResumeContentInfo(data);
+            await playFabService.SaveResumeInfo(data);
         }
+
         #endregion
 
         #region ::: Private Methods :::
-        private void AnalyResume()
-        {
-
-        }
         #endregion
         #region ::: Private Methods - Open File :::
         bool ConfirmOpenFile(string error)
@@ -99,6 +95,16 @@ namespace Jing.Game.PreInterview
                 Action_OpenPopup?.Invoke("Error uploading to OpenAI!");
                 return false;
             }
+            FileId = result.id;
+            FileName = result.filename;
+            Data_UploadResume info = new Data_UploadResume()
+            {
+                OpenAI_FileId = FileId,
+                OpenAI_FileName = FileName
+            };
+            userDataService.UpdateResumeUploadInfo(info);
+            playFabService.SaveUploadResume(info);
+
             return true;
         }
 

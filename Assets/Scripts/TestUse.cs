@@ -1,4 +1,5 @@
 using Jing.Data;
+using Jing.Game.Services;
 using UnityEngine;
 using VContainer;
 
@@ -8,14 +9,14 @@ public class TestUse : MonoBehaviour
     private GUIStyle style;
 
     #region ::: Inject :::
-    private Data_Uesr data_uesr;
+    private IUserDataService userDataService;
     private IAIResume aiResume;
 
 
     [Inject]
-    public void Construct(Data_Uesr data_uesr, IAIResume aiResume)
+    public void Construct(IUserDataService userDataService, IAIResume aiResume)
     {
-        this.data_uesr = data_uesr;
+        this.userDataService = userDataService;
         this.aiResume = aiResume;
     }
 
@@ -37,14 +38,19 @@ public class TestUse : MonoBehaviour
             RefetchResume();
         }
 
-
         GUI.DragWindow(new Rect(0, 0, 10000, 10000));
     }
 
     private void RefetchResume()
     {
-
-
+        if (string.IsNullOrEmpty(userDataService.UserData?.ResumeUpload?.OpenAI_FileId))
+        {
+            Debug.Log("No Data");
+            return;
+        }
+        Data_UploadResume info = userDataService.UserData?.ResumeUpload;
+        userDataService.UpdateResumeUploadInfo(info);
+        aiResume.RequestOpenAIResumeAnalysis();
     }
 }
 

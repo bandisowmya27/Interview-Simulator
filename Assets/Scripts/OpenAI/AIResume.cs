@@ -1,91 +1,82 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 using static ManagerAI.OPEN_AI;
-using Newtonsoft.Json;
+
 using Jing.Data;
 using Cysharp.Threading.Tasks;
+using VContainer;
+using System.Diagnostics;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Jing.Game.Services;
+
 
 public interface IAIResume
 {
     UniTask<Request_File> Send_PDF_File(byte[] pdfBytes, string fileName);
-
+    UniTask<Data_ResumeInfomation> RequestOpenAIResumeAnalysis();
 }
 
-public class AIResume : IAIResume
+public class AIResume : AIBase, IAIResume
 {
-    public readonly string common_ai_model = "gpt-5-mini";
+    #region ::: Inject :::
+    private IUserDataService userDataService;
 
+    [Inject]
+    public void Construct(IUserDataService userDataService)
+    {
+        this.userDataService = userDataService;
+    }
+
+    #endregion
+    private string file_id = string.Empty;
     public async UniTask<Request_File> Send_PDF_File(byte[] pdfBytes, string fileName)
     {
-        var tcs = new UniTaskCompletionSource<Request_File>();
-        await UPLOAD_PDF(pdfBytes, fileName, onSuccess, onFailed);
-        return await tcs.Task;
-
-        void onSuccess(Request_File result)
-        {
-            tcs.TrySetResult(result);
-        }
-        void onFailed()
-        {
-            tcs.TrySetResult(null);
-        }
+        return await UPLOAD_PDF(pdfBytes, fileName);
     }
 
     #region ::: AI Setting :::
-    private void SetResumePrompt(string resumeText)
+    public UniTask<Data_ResumeInfomation> RequestOpenAIResumeAnalysis()
     {
-        Data_UserResume defaultData = new Data_UserResume();
+        var tcs = new UniTaskCompletionSource<Data_ResumeInfomation>();
+        Request ai_request = CreateRequest();
+        SetPrompt(ai_request,
+        "You are a professional resume parsing assistant. Please extract information from the provided file and return it strictly in the specified format.");
 
-        string jsonSchemaTemplate = JsonConvert.SerializeObject(defaultData, Formatting.Indented);
+        SaveByMessageType data = new SaveByMessageType();
+        data.SaveText("Please parse the following uploaded resume file.");
+        data.SaveFile(userDataService.UserData.ResumeUpload.OpenAI_FileId);
 
-        string prompt = $"請分析以下履歷，並嚴格按照以下 JSON 結構回傳，不要包含任何額外文字：\n{jsonSchemaTemplate}\n\n履歷內容：\n{resumeText}";
+        var textData = new ListMessage();
+        textData.role = "user";
+        textData.content = data.GetDataList();
+        ai_request.messages.Add(textData);
 
-        Debug.Log(prompt);
-    }
-    #endregion
-    #region ::: Manager Private Methods :::
-    private Request CreateRequest()
-    {
-        var request_ai = new Request()
+        ResponseFormat response_format = new ResponseFormat();
+        JObject schema = openAISchemaGenerator.GenerateJsonSchema<Data_ResumeInfomation>();
+        ai_request.response_format = new ResponseFormat()
         {
-            model = common_ai_model,
-            max_completion_tokens = 4000,
-            reasoning_effort = "low", // "low", "medium", "high" - use "low" to minimize reasoning
+            type = "json_schema",
+            json_schema = schema
         };
-        return request_ai;
-    }
 
+        UnityEngine.Debug.Log(ai_request);
+        SendToOpenAI(ai_request, on_success, on_error);
+        return tcs.Task;
 
-    private void SetResumePrompt(Request request_ai)
-    {
-        string message_system = string.Empty;
-
-
-        if (!string.IsNullOrEmpty(message_system))
+        void on_success(Result result)
         {
-            var message = new TextMessage();
-            {
-                message.role = "developer";
+            UnityEngine.Debug.Log(result);
+            Data_ResumeInfomation data = JsonConvert.DeserializeObject<Data_ResumeInfomation>(result.choices[0].message.content);
+            userDataService.UpdateResumeContentInfo(data);
+            tcs.TrySetResult(data);
+        }
 
-                message.content = message_system;
-            }
-            request_ai.messages.Add(message);
+        void on_error()
+        {
+            UnityEngine.Debug.Log("RequestOpenAIResumeAnalysis Error");
+            tcs.TrySetResult(new Data_ResumeInfomation());
         }
     }
 
-    private void SendToOpenAI(Request request_ai, Action<Result> on_success, Action on_error)
-    {
-        var json = JsonConvert.SerializeObject(request_ai);
-        ManagerAI.OPEN_AI.SEND_MESSAGE(
-            json,
-            (result) =>
-            {
-                on_success?.Invoke(result);
-            },
-            () => on_error?.Invoke()
-        );
-    }
     #endregion
+
 }

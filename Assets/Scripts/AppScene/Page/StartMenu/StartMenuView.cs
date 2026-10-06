@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using Jing.Data;
 using Jing.Game.Loading;
+using Jing.Game.Services;
 using Jing.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,14 +18,14 @@ namespace Jing.StartMenu
         #endregion
 
         #region ::: Inject :::
-        private UIManager uiManager;
-        private Data_Uesr data_uesr;
+        private IUIManager uiManager;
+        private IUserDataService userDataService;
 
         [Inject]
-        public virtual void Construct(UIManager uiManager, Data_Uesr data_uesr)
+        public virtual void Construct(IUIManager uiManager, IUserDataService userDataService)
         {
             this.uiManager = uiManager;
-            this.data_uesr = data_uesr;
+            this.userDataService = userDataService;
         }
         #endregion
         protected override void InitGetUI()
@@ -38,7 +39,7 @@ namespace Jing.StartMenu
         protected override void InitSet()
         {
             base.InitSet();
-            btn_start.interactable = (!string.IsNullOrEmpty(data_uesr?.Resume?.OpenAI_FileId));
+            btn_start.interactable = (!string.IsNullOrEmpty(userDataService?.UserData?.ResumeUpload?.OpenAI_FileId));
         }
 
         protected override void AddListence()
